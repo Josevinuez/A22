@@ -1,5 +1,9 @@
 package MVC;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.*;
 public class GameView extends JFrame {
@@ -7,16 +11,27 @@ public class GameView extends JFrame {
 	private final GameController gameController;
 	private JDialog designDialog;
 	private int dim=5;
+	private int totalTiles;
+	private int numBoats;
+	private ResourceBundle messages;
 	private JPanel[] gridPanel;
 	private JButton[][][] gridButtons;
 	private JPanel controlPanel;
 	private JPanel playerGridPanel;
 	private JPanel opponentGridPanel;
+	private JButton designButton;
+	private JButton randomLayoutButton;
+	private JButton resetButton;
+	private JButton playButton;
+
+	private JLabel timerLabel = new JLabel("00:00:00");
 	private final JMenuItem newItem;
 	private final JMenuItem solutionItem;
 	private final JMenuItem exitItem;
 	private final JMenuItem colorItem;
 	private final JMenuItem aboutItem;
+	private JProgressBar playerProgressBar;
+	private JProgressBar opponentProgressBar;
 	private boolean designMode = false;
 	private boolean gameMode = false;
 	private AtomicLong startTime;
@@ -50,7 +65,7 @@ public class GameView extends JFrame {
 
 		// Close the splash screen after some time
 		try {
-			Thread.sleep(5000);  // Show splash for 5 seconds
+			Thread.sleep(0);  // Show splash for 5 seconds
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -205,10 +220,10 @@ public class GameView extends JFrame {
 	    }
 
 	    // Add a progress bar below the player grid panel
-	    JProgressBar playerProgressBar = new JProgressBar(0, 100);
-	    playerProgressBar.setStringPainted(true);
-	    playerProgressBar.setValue(gameModel.getPlayerHits());
-	    playerGridPanel.add(playerProgressBar);
+		playerProgressBar = new JProgressBar(0, 100);
+		playerProgressBar.setStringPainted(true);
+		playerProgressBar.setValue(gameModel.getPlayerHits());
+		playerGridPanel.add(playerProgressBar);
 
 	    add(playerGridPanel);
 
@@ -240,10 +255,10 @@ public class GameView extends JFrame {
 	    }
 
 	    // Add a progress bar below the opponent grid panel
-	    JProgressBar opponentProgressBar = new JProgressBar(0, 100);
-	    opponentProgressBar.setStringPainted(true);
-	    opponentProgressBar.setValue(gameModel.getComputerHits());
-	    opponentGridPanel.add(opponentProgressBar);
+		opponentProgressBar = new JProgressBar(0, 100);
+		opponentProgressBar.setStringPainted(true);
+		opponentProgressBar.setValue(gameModel.getComputerHits());
+		opponentGridPanel.add(opponentProgressBar);
 
 	    add(opponentGridPanel);
 
@@ -255,7 +270,7 @@ public class GameView extends JFrame {
 	private void createControlPanel() {
 		controlPanel = new JPanel();
 		controlPanel.setLayout(new GridBagLayout());
-	    
+
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.gridx = 0;
 		constraints.gridy = 0;
@@ -289,9 +304,23 @@ public class GameView extends JFrame {
 		languageSelectorLabel.setPreferredSize(new Dimension(75, 25));
 
 		languageSelectorPanel.add(languageSelectorLabel);
-		String[] languages = { "English", "French" };
+
+		String[] languages = { "English", "Spanish" };
 		JComboBox<String> languageComboBox = new JComboBox<>(languages);
 		languageComboBox.setPreferredSize(new Dimension(80, 25));
+
+		languageComboBox.addActionListener(e -> {
+			String selectedLanguage = (String) languageComboBox.getSelectedItem();
+			Locale locale = Locale.ENGLISH; // Default to English
+
+			if (selectedLanguage.equals("Spanish")) {
+				locale = Locale.FRENCH;
+			}
+
+			messages = ResourceBundle.getBundle("resources.languages.labels", locale);
+			updateButtonNames();
+		});
+
 		languageSelectorPanel.add(languageComboBox);
 		centerPanel.add(languageSelectorPanel);
 
@@ -299,13 +328,15 @@ public class GameView extends JFrame {
 		JPanel designRandomPanel = new JPanel();
 		designRandomPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-		JButton designButton = new JButton("   Design  ");
+		designButton = new JButton("   Design  ");
 		designButton.addActionListener(e -> {
 			switchToDesignMode();
 			gameModel.placeManualBoats();
+			numberOfTiles();
+			numberOfBoats();
 		});
 
-		JButton randomLayoutButton = new JButton(" Random ");
+		randomLayoutButton = new JButton(" Random ");
 		randomLayoutButton.addActionListener(e -> {
 			System.out.println("Random Layout button clicked");
 			gameModel.placeRandomBoats();
@@ -356,7 +387,7 @@ public class GameView extends JFrame {
 
 		JTextArea historyTextArea = new JTextArea();
 		JScrollPane historyScrollPane = new JScrollPane(historyTextArea);
-		historyTextArea.setWrapStyleWord(true); //Fit text in the box size
+		historyTextArea.setWrapStyleWord(true);
 		historyTextArea.setLineWrap(true);
 		bottomPanel.add(historyScrollPane);
 
@@ -371,7 +402,7 @@ public class GameView extends JFrame {
         timerButton.setBackground(Color.WHITE); // Set the background color to white
 
         JLabel timeLabel = new JLabel("Time: ");
-        JLabel timerLabel = new JLabel("00:00:00");
+		timerLabel = new JLabel("00:00:00");
 
         timeLayout.add(timeLabel);
         timerButton.add(timerLabel);
@@ -386,35 +417,36 @@ public class GameView extends JFrame {
 			timerLabel.setText(formattedTime);
 		});
         bottomPanel.add(timeLayout);
-		
+
 		// Reset and Play Buttons
 		JPanel resetPlayPanel = new JPanel();
 		resetPlayPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-		JButton resetButton = new JButton("Reset");
-        resetButton.addActionListener(e -> {
+		resetButton = new JButton("Reset");
+		resetButton.addActionListener(e -> {
 			System.out.println("Reset button clicked");
 			redrawBoard();
-			startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
-			timer.start(); // Start the timer
+			startTime.set(System.currentTimeMillis());
+			timer.stop();
 		});
 
-		JButton playButton = new JButton("Play");
-        playButton.addActionListener(e -> {
+		playButton = new JButton("Play");
+		playButton.addActionListener(e -> {
 			System.out.println("Play button clicked");
+			numberOfTiles();
 			gameMode = true;
-			startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
-			timer.start(); // Start the timer
+			startTimer();
 		});
 
 		resetPlayPanel.add(resetButton);
 		resetPlayPanel.add(playButton);
 
+
 		bottomPanel.add(resetPlayPanel);
 
 		// Add top and bottom panels to center panel
 		centerPanel.add(bottomPanel);
-	    
+
 		controlPanel.add(centerPanel, constraints);
 		constraints.gridx = 2;
 		constraints.gridy = 0;
@@ -641,5 +673,47 @@ public class GameView extends JFrame {
 	public String getBoatDirection() {
 		return (String) this.boatDirectionChoiceBox.getSelectedItem();
 	}
-
+	private void startTimer() {
+		startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
+		Timer timer = new Timer(1000, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				long elapsedTime = System.currentTimeMillis() - startTime.get();
+				String formattedTime = formatTime(elapsedTime);
+				timerLabel.setText(formattedTime);
+			}
+		});
+		timer.start(); // Start the timer
+	}
+	private void updateButtonNames() {
+		// Update the button names based on the loaded properties
+		designButton.setText(messages.getString("designButton"));
+		randomLayoutButton.setText(messages.getString("randomLayoutButton"));
+		resetButton.setText(messages.getString("resetButton"));
+		playButton.setText(messages.getString("playButton"));
+	}
+	public void updatePlayerProgressBar() {
+		int playerProgress = calculateProgressPercentage(gameModel.getPlayerHits());
+		playerProgressBar.setValue(playerProgress);
+		if (playerProgress == 100) {
+			JOptionPane.showMessageDialog(this, "You are the winner!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	public void updateComputerProgressBar() {
+		int computerProgress = calculateProgressPercentage(gameModel.getComputerHits());
+		opponentProgressBar.setValue(computerProgress);
+		if (computerProgress == 100) {
+			JOptionPane.showMessageDialog(this, "Opponent is the winner!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	public void numberOfTiles(){
+		totalTiles=gameModel.getTotalTiles();
+	}
+	private int calculateProgressPercentage(int hits) {
+		return (hits * 100) / totalTiles;
+	}
+	private int numberOfBoats(){
+		numBoats= gameModel.getNumBoats();
+		return numBoats;
+	}
 }

@@ -11,8 +11,9 @@ public class GameModel {
     private static final int DEFAULT_NUM_OF_BOARDS = 2;
     private int dimension;
     private final int numOfBoards;
-    private int numBoats= 0;
-    private int playerHits = 0;
+    private int numBoats;
+    private int numTiles;
+    private int playerHits ;
     private int computerHits = 0;
     private CellState[][] gridPlayer;
     private CellState[][] gridOpponent;
@@ -107,6 +108,7 @@ public class GameModel {
         int arraySize = dimension/2;
         int[] boatSizes = new int[arraySize];
         int arrayIndex = 0;
+
         numBoats=0;
 
         for (int i = dimension/2; i > 0; i--) {
@@ -127,6 +129,23 @@ public class GameModel {
 
         System.out.println("Total number of boats: " + numBoats);
         return numBoats;
+
+    }
+    /**
+     * Calculates and returns the total number of tiles occupied by the boats.
+     *
+     * @return The total number of tiles occupied by the boats.
+     */
+    public int calculateTotalTiles() {
+        numTiles = 0;
+
+        for (int i = dimension / 2; i > 0; i--) {
+            for (int j = 1; j <= dimension / 2 - i + 1; j++) {
+                numTiles += i;
+            }
+        }
+
+        return numTiles;
     }
     /**
      * Creates a random boat on the game grid with the specified size.
@@ -301,6 +320,9 @@ public class GameModel {
      */
     public int getNumBoats() {
         return numBoats;
+    }
+    public int getTotalTiles() {
+        return calculateTotalTiles();
     }
 
 }

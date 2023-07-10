@@ -102,6 +102,8 @@ public class GameController {
 			if (hit) {
 				System.out.println("You hit a boat on board " + boardIndex +" Row "+row+" Col "+col+ "!");
 				gridButtons[boardIndex][row][col].setBackground(Color.RED);
+				view.updateComputerProgressBar();
+				view.updatePlayerProgressBar();
 			} else {
 				System.out.println("You missed on board " + boardIndex +" Row "+row+" Col "+col+ ".");
 				gridButtons[boardIndex][row][col].setBackground(Color.BLUE);
@@ -109,8 +111,6 @@ public class GameController {
 			gridButtons[boardIndex][row][col].setContentAreaFilled(false);
 			gridButtons[boardIndex][row][col].setOpaque(true);
 			UIManager.put("Button.disabledText", Color.BLACK);
-
-			// After player's move, call the computer move
 			computerMakeMove();
 		}
 	}
@@ -158,6 +158,9 @@ public class GameController {
 		if (hit) {
 			System.out.println("Computer hit a boat at Row "+row+" Col "+col+"!");
 			view.getGridButtons()[0][row][col].setBackground(Color.RED);
+			view.updateComputerProgressBar();
+			view.updatePlayerProgressBar();
+
 		} else {
 			System.out.println("Computer missed at Row "+row+" Col "+col+".");
 			view.getGridButtons()[0][row][col].setBackground(Color.BLUE);
