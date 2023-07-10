@@ -88,7 +88,7 @@ public class GameView extends JFrame {
 		JMenu helpMenu = new JMenu("Help");
 
 		newItem = new JMenuItem("New");
-		solutionItem = new JMenuItem("Solution");
+		solutionItem = new JMenuItem("Instructions");
 		exitItem = new JMenuItem("Exit");
 
 		colorItem = new JMenuItem("Colors");
@@ -139,8 +139,8 @@ public class GameView extends JFrame {
 			setIconImage(icon.getImage());
 
 			JLabel instructionsLabel = new JLabel("<html>"
-					+ "<h2>&nbsp;&nbsp;Instructions:</h2>"
-					+ "<p>&nbsp;&nbsp;&nbsp;Each player has to place their ships on their grid without the &nbsp;&nbsp;&nbsp;opponent knowing the placement.</p>"
+					+ "<h2>  Battleship:</h2>"
+					+ "<p>   Random or Manual? Press Play to Begin. Choose your style and set sail!</p>"
 					+ "</html>");
 			instructionsLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			add(instructionsLabel);
@@ -219,11 +219,15 @@ public class GameView extends JFrame {
 			}
 	    }
 
-	    // Add a progress bar below the player grid panel
+		//Progress bar and text label below the player grid panel
 		playerProgressBar = new JProgressBar(0, 100);
 		playerProgressBar.setStringPainted(true);
 		playerProgressBar.setValue(gameModel.getPlayerHits());
 		playerGridPanel.add(playerProgressBar);
+
+		String labelText = "Player";
+		JLabel playerProgressLabel = new JLabel(labelText);
+		playerGridPanel.add(playerProgressLabel);
 
 	    add(playerGridPanel);
 
@@ -254,7 +258,7 @@ public class GameView extends JFrame {
 	        }
 	    }
 
-	    // Add a progress bar below the opponent grid panel
+		// Add a progress bar and text label below the opponent grid panel
 		opponentProgressBar = new JProgressBar(0, 100);
 		opponentProgressBar.setStringPainted(true);
 		opponentProgressBar.setValue(gameModel.getComputerHits());
@@ -597,7 +601,7 @@ public class GameView extends JFrame {
 
 				switch (gridPlayer[row][col]) {
 					case BOAT:
-						color = Color.GREEN;
+						color = Color.BLACK;
 						break;
 					case HIT:
 						color = Color.RED;

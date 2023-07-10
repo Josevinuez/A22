@@ -81,13 +81,13 @@ public class GameController {
 					for (int i = 0; i < boatSize; i++) {
 						if ("Horizontal".equals(direction)) {
 							if (col + i < gridButtons[boardIndex][row].length) {
-								gridButtons[boardIndex][row][col + i].setBackground(Color.GREEN);
+								gridButtons[boardIndex][row][col + i].setBackground(ColorModel.Colors.shipColor);
 								gridButtons[boardIndex][row][col].setContentAreaFilled(false);
 								gridButtons[boardIndex][row][col].setOpaque(true);
 							}
 						} else {
 							if (row + i < gridButtons[boardIndex].length) {
-								gridButtons[boardIndex][row + i][col].setBackground(Color.GREEN);
+								gridButtons[boardIndex][row + i][col].setBackground(ColorModel.Colors.shipColor);
 								gridButtons[boardIndex][row][col].setContentAreaFilled(false);
 								gridButtons[boardIndex][row][col].setOpaque(true);
 							}
@@ -101,12 +101,12 @@ public class GameController {
 			boolean hit = model.makeMove(boardIndex, row, col);
 			if (hit) {
 				System.out.println("You hit a boat on board " + boardIndex +" Row "+row+" Col "+col+ "!");
-				gridButtons[boardIndex][row][col].setBackground(Color.RED);
+				gridButtons[boardIndex][row][col].setBackground(ColorModel.Colors.shipColor);
 				view.updateComputerProgressBar();
 				view.updatePlayerProgressBar();
 			} else {
 				System.out.println("You missed on board " + boardIndex +" Row "+row+" Col "+col+ ".");
-				gridButtons[boardIndex][row][col].setBackground(Color.BLUE);
+				gridButtons[boardIndex][row][col].setBackground(ColorModel.Colors.waterColor);
 			}
 			gridButtons[boardIndex][row][col].setContentAreaFilled(false);
 			gridButtons[boardIndex][row][col].setOpaque(true);
@@ -157,13 +157,13 @@ public class GameController {
 		boolean hit = model.makeMove(0, row, col); // Making move on player's board
 		if (hit) {
 			System.out.println("Computer hit a boat at Row "+row+" Col "+col+"!");
-			view.getGridButtons()[0][row][col].setBackground(Color.RED);
+			view.getGridButtons()[0][row][col].setBackground(ColorModel.Colors.shipColor);
 			view.updateComputerProgressBar();
 			view.updatePlayerProgressBar();
 
 		} else {
 			System.out.println("Computer missed at Row "+row+" Col "+col+".");
-			view.getGridButtons()[0][row][col].setBackground(Color.BLUE);
+			view.getGridButtons()[0][row][col].setBackground(ColorModel.Colors.waterColor);
 		}
 		view.getGridButtons()[0][row][col].setContentAreaFilled(false);
 		view.getGridButtons()[0][row][col].setOpaque(true);
