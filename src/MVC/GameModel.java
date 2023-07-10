@@ -384,5 +384,4 @@ class ColorModel extends JFrame {
 
         add(colorPanel);
     }
-
 }
