@@ -10,9 +10,8 @@ public class GameModel {
     private static final int DEFAULT_DIMENSION = 5;
     private static final int DEFAULT_NUM_OF_BOARDS = 2;
     private int dimension;
-    private int numOfBoards;
+    private final int numOfBoards;
     private int numBoats= 0;
-    private int [] boatSizes;
     private int playerHits = 0;
     private int computerHits = 0;
     private CellState[][] gridPlayer;
@@ -106,7 +105,7 @@ public class GameModel {
      */
     private int generateNumberBoats(CellState[][] grid) {
         int arraySize = dimension/2;
-        boatSizes = new int[arraySize];
+        int[] boatSizes = new int[arraySize];
         int arrayIndex = 0;
         numBoats=0;
 
@@ -119,7 +118,7 @@ public class GameModel {
             }
         }
 
-        // printing the array of i values
+        // printing the array of I value
         System.out.print("i values: ");
         for (int val : boatSizes) {
             System.out.print(val + " ");
@@ -338,12 +337,10 @@ class ColorModel extends JFrame {
         JLabel unselectedColorLabel = new JLabel(); // Label to display selected color for unselectColorButton
         unselectedButtonPanel.add(unselectedColorLabel);
 
-        unselectColorButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.WHITE);
-                if (selectedColor != null) {
-                    unselectedColorFill.setBackground(selectedColor);
-                }
+        unselectColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.WHITE);
+            if (selectedColor != null) {
+                unselectedColorFill.setBackground(selectedColor);
             }
         });
 
@@ -357,12 +354,10 @@ class ColorModel extends JFrame {
 //      waterColorFill.setBackground(Color.WHITE);
         waterButtonPanel.add(waterColorFill);
 
-        waterColorButton.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.DARK_GRAY);
-                if (selectedColor != null) {
-                    waterColorFill.setBackground(selectedColor);
-                }
+        waterColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.DARK_GRAY);
+            if (selectedColor != null) {
+                waterColorFill.setBackground(selectedColor);
             }
         });
 
@@ -376,12 +371,10 @@ class ColorModel extends JFrame {
 //      shipColorFill.setBackground(Color.WHITE);
         shipButtonPanel.add(shipColorFill);
 
-        shipColorButton.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.DARK_GRAY);
-                if (selectedColor != null) {
-                    shipColorFill.setBackground(selectedColor);
-                }
+        shipColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(colorPanel, "Select a color", Color.DARK_GRAY);
+            if (selectedColor != null) {
+                shipColorFill.setBackground(selectedColor);
             }
         });
 

@@ -9,9 +9,7 @@ import javax.swing.*;
 public class GameController {
 	private final GameModel model;
 	private final GameView view;
-	private Integer currentBoatSize = null;
-	private String currentBoatDirection = null;
-	private boolean playerTurn;
+
 	/**
 	 * Constructs a GameController object with the specified GameModel and GameView.
 	 *
@@ -21,7 +19,7 @@ public class GameController {
 	public GameController(GameModel model, GameView view) {
 		this.model = model;
 		this.view = view;
-		this.playerTurn = true;
+		boolean playerTurn = true;
 		attachButtonListeners();
 		if (view.getNewItem() != null) {
 			view.getNewItem().addActionListener(e -> resetGame());
@@ -123,8 +121,6 @@ public class GameController {
 	 * @param direction The direction of the boat.
 	 */
 	public void setBoatSizeAndDirection(Integer size, String direction) {
-		this.currentBoatSize = size;
-		this.currentBoatDirection = direction;
 	}
 	/**
 	 * Resets the game by redrawing the board and attaching button listeners.

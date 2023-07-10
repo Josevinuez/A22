@@ -1,7 +1,5 @@
 package MVC;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.*;
 public class GameView extends JFrame {
@@ -14,15 +12,19 @@ public class GameView extends JFrame {
 	private JPanel controlPanel;
 	private JPanel playerGridPanel;
 	private JPanel opponentGridPanel;
-	private JMenuBar menuBar;
-	private JMenu fileMenu, helpMenu;
-	private JMenuItem newItem, solutionItem, exitItem;
-	private JMenuItem colorItem, aboutItem;
+	private final JMenuItem newItem;
+	private final JMenuItem solutionItem;
+	private final JMenuItem exitItem;
+	private final JMenuItem colorItem;
+	private final JMenuItem aboutItem;
 	private boolean designMode = false;
 	private boolean gameMode = false;
 	private AtomicLong startTime;
 	private JComboBox<Integer> boatSizeChoiceBox;
 	private JComboBox<String> boatDirectionChoiceBox;
+	/**
+	 * Displays the splash screen for the game.
+	 */
 	public void showSplashScreen() {
 		// Create a JFrame as splash screen
 		JFrame splashScreen = new JFrame();
@@ -54,7 +56,11 @@ public class GameView extends JFrame {
 		}
 		splashScreen.dispose();
 	}
-
+	/**
+	 * Constructs a GameView object with the specified GameModel.
+	 *
+	 * @param gameModel The GameModel object associated with the view.
+	 */
 	public GameView(GameModel gameModel) {
 		this.gameModel = gameModel;
 		this.gameController = new GameController(gameModel, this);
@@ -62,9 +68,9 @@ public class GameView extends JFrame {
 		int columns = gameModel.getDimension();
 		int numOfBoards = gameModel.getNumOfBoards();
 
-		menuBar = new JMenuBar();
-		fileMenu = new JMenu("Game");
-		helpMenu = new JMenu("Help");
+		JMenuBar menuBar = new JMenuBar();
+		JMenu fileMenu = new JMenu("Game");
+		JMenu helpMenu = new JMenu("Help");
 
 		newItem = new JMenuItem("New");
 		solutionItem = new JMenuItem("Solution");
@@ -104,6 +110,9 @@ public class GameView extends JFrame {
 		showSplashScreen();
 		setVisible(true);
 	}
+	/**
+	 * Represents a JFrame window for displaying game instructions.
+	 */
 	static class InstructionsWindow extends JFrame {
 		public InstructionsWindow() {
 			setTitle("Instructions");
@@ -122,21 +131,52 @@ public class GameView extends JFrame {
 			add(instructionsLabel);
 		}
 	}
+	/**
+	 * Returns the "New" JMenuItem.
+	 *
+	 * @return The "New" JMenuItem.
+	 */
 	public JMenuItem getNewItem() {
 		return newItem;
 	}
+	/**
+	 * Returns the "Solution" JMenuItem.
+	 *
+	 * @return The "Solution" JMenuItem.
+	 */
 	public JMenuItem getSolutionItem() {
 		return solutionItem;
 	}
+	/**
+	 * Returns the "Exit" JMenuItem.
+	 *
+	 * @return The "Exit" JMenuItem.
+	 */
 	public JMenuItem getExitItem() {
 		return exitItem;
 	}
+	/**
+	 * Returns the "Colors" JMenuItem.
+	 *
+	 * @return The "Colors" JMenuItem.
+	 */
 	public JMenuItem getColorItem() {
 		return colorItem;
 	}
+	/**
+	 * Returns the "About" JMenuItem.
+	 *
+	 * @return The "About" JMenuItem.
+	 */
 	public JMenuItem getAboutItem() {
 		return aboutItem;
 	}
+	/**
+	 * Creates the grid panels for the player and opponent grids.
+	 *
+	 * @param rows    The number of rows in the grids.
+	 * @param columns The number of columns in the grids.
+	 */
 	private void createGridPanels(int rows, int columns) {
 	    // Create the player grid panel
 	    playerGridPanel = new JPanel(new GridLayout(rows + 2, columns + 1));
@@ -209,6 +249,9 @@ public class GameView extends JFrame {
 
 	    setVisible(true);
 	}
+	/**
+	 * Creates the control panel that contains various game controls and settings.
+	 */
 	private void createControlPanel() {
 		controlPanel = new JPanel();
 		controlPanel.setLayout(new GridBagLayout());
@@ -337,14 +380,11 @@ public class GameView extends JFrame {
         startTime = new AtomicLong(0);
 
         int delay = 1000;
-        Timer timer = new Timer(delay, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                long elapsedTime = System.currentTimeMillis() - startTime.get();
-                String formattedTime = formatTime(elapsedTime);
-                timerLabel.setText(formattedTime);
-            }
-        });
+        Timer timer = new Timer(delay, e -> {
+			long elapsedTime = System.currentTimeMillis() - startTime.get();
+			String formattedTime = formatTime(elapsedTime);
+			timerLabel.setText(formattedTime);
+		});
         bottomPanel.add(timeLayout);
 		
 		// Reset and Play Buttons
@@ -352,26 +392,20 @@ public class GameView extends JFrame {
 		resetPlayPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
 		JButton resetButton = new JButton("Reset");
-        resetButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("Reset button clicked");
-				redrawBoard();
-                startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
-                timer.start(); // Start the timer
-            }
-        });
+        resetButton.addActionListener(e -> {
+			System.out.println("Reset button clicked");
+			redrawBoard();
+			startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
+			timer.start(); // Start the timer
+		});
 
 		JButton playButton = new JButton("Play");
-        playButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("Play button clicked");
-				gameMode = true;
-                startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
-                timer.start(); // Start the timer
-            }
-        });
+        playButton.addActionListener(e -> {
+			System.out.println("Play button clicked");
+			gameMode = true;
+			startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
+			timer.start(); // Start the timer
+		});
 
 		resetPlayPanel.add(resetButton);
 		resetPlayPanel.add(playButton);
@@ -390,14 +424,22 @@ public class GameView extends JFrame {
 
 		setVisible(true);
 	}
+	/**
+	 * Formats the time in milliseconds to the format "HH:mm:ss".
+	 *
+	 * @param milliseconds The time in milliseconds.
+	 * @return The formattedtime in the format "HH:mm:ss".
+	 */
     private String formatTime(long milliseconds) {
         long seconds = (milliseconds / 1000) % 60;
         long minutes = (milliseconds / (1000 * 60)) % 60;
         long hours = (milliseconds / (1000 * 60 * 60)) % 24;
 
-        String formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds);
-        return formattedTime;
+		return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+	/**
+	 * Switches the view to the design mode, allowing the user to manually place boats on the grid.
+	 */
 	private void switchToDesignMode() {
 		designMode = true;
 
@@ -419,6 +461,11 @@ public class GameView extends JFrame {
 		designDialog.setLocationRelativeTo(this);
 		designDialog.setVisible(true);
 	}
+	/**
+	 * Creates the design panel that allows the user to manually place boats on the grid.
+	 *
+	 * @return The design panel.
+	 */
 	private JPanel createDesignPanel() {
 		// Create a JPanel for the design panel
 		JPanel designPanel = new JPanel();
@@ -463,6 +510,9 @@ public class GameView extends JFrame {
 
 		return designPanel;
 	}
+	/**
+	 * Switches the view to the game mode, where the game is being played.
+	 */
 	private void switchToGameMode() {
 		designMode = false;
 		GridBagConstraints constraints = new GridBagConstraints();
@@ -478,12 +528,21 @@ public class GameView extends JFrame {
 		this.repaint();
 		this.revalidate();
 	}
+	/**
+	 * Creates a JButton with a label and disables it.
+	 *
+	 * @param string The label of the button.
+	 * @return The created JButton.
+	 */
 	private JButton createLabelButton(String string) {
 		JButton labelButton = new JButton(string);
 		labelButton.setEnabled(false);
 		labelButton.setFocusable(false);
 		return labelButton;
 	}
+	/**
+	 * Sets the game icon for the JFrame.
+	 */
     private void setGameIcon() {
         ImageIcon icon = new ImageIcon("resources/images/icon_1.png");
         setIconImage(icon.getImage());
@@ -491,6 +550,11 @@ public class GameView extends JFrame {
 	public JButton[][][] getGridButtons() {
 		return gridButtons;
 	}
+	/**
+	 * Updates the colors of the player's grid buttons based on the current state of the game.
+	 *
+	 * @param gameModel The game model containing the grid state.
+	 */
 	public void updatePlayerGridColors(GameModel gameModel) {
 		GameModel.CellState[][] gridPlayer = gameModel.getGridPlayer();
 		int boardIndex = 0; // Player's board
@@ -522,6 +586,9 @@ public class GameView extends JFrame {
 		this.revalidate();
 		this.repaint();
 	}
+	/**
+	 * Redraws the game board by recreating the grid panels and buttons based on the updated game model.
+	 */
 	protected void redrawBoard() {
 		// Remove only the controlPanel from the frame
 		getContentPane().remove(controlPanel);
@@ -542,16 +609,35 @@ public class GameView extends JFrame {
 		revalidate();
 		repaint();
 	}
+	/**
+	 * Gets the current design mode state.
+	 *
+	 * @return True if the view is in design mode, false otherwise.
+	 */
 	public boolean getDesignMode() {
 		return this.designMode;
 	}
+	/**
+	 * Gets the current game mode state.
+	 *
+	 * @return True if the game is in progress, false otherwise.
+	 */
 	public boolean getGameMode() {
 		return this.gameMode;
 	}
-
+	/**
+	 * Gets the selected boat size from the boat size choice box in the design panel.
+	 *
+	 * @return The selected boat size.
+	 */
 	public int getBoatSize() {
 		return (Integer) this.boatSizeChoiceBox.getSelectedItem();
 	}
+	/**
+	 * Gets the selected boat direction from the boatdirection choice box in the design panel.
+	 *
+	 * @return The selected boat direction.
+	 */
 	public String getBoatDirection() {
 		return (String) this.boatDirectionChoiceBox.getSelectedItem();
 	}
