@@ -9,7 +9,6 @@ public class BattleshipGame {
 			GameModel model = new GameModel();
 			GameView view = new GameView(model);
 			GameController controller = new GameController(model, view);
-
 		});
 	}
 }
