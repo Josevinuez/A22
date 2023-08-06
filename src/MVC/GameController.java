@@ -9,7 +9,6 @@ import javax.swing.*;
 public class GameController {
 	private final GameModel model;
 	private final GameView view;
-
 	/**
 	 * Constructs a GameController object with the specified GameModel and GameView.
 	 *
@@ -133,7 +132,7 @@ public class GameController {
 	 * Shows the game instructions.
 	 */
 	public void showInstructions() {
-		GameView.InstructionsWindow instructionsWindow = new GameView.InstructionsWindow();
+		InstructionsWindow instructionsWindow = new InstructionsWindow();
 		instructionsWindow.setVisible(true);
 	}
 	/**
@@ -152,7 +151,7 @@ public class GameController {
 		do {
 			row = random.nextInt(model.getDimension());
 			col = random.nextInt(model.getDimension());
-		} while (playerGrid[row][col] == GameModel.CellState.HIT || playerGrid[row][col] == GameModel.CellState.MISS);
+		} while (playerGrid[row][col] == GameModel.CellState.H || playerGrid[row][col] == GameModel.CellState.M);
 
 		boolean hit = model.makeMove(0, row, col); // Making move on player's board
 		if (hit) {

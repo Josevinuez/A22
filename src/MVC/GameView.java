@@ -2,13 +2,18 @@ package MVC;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.PrintStream;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.*;
+import java.io.IOException;
+
 public class GameView extends JFrame {
 	private final GameModel gameModel;
 	private final GameController gameController;
+	private Server server;
+	private Client client;
 	private JDialog designDialog;
 	private int dim=5;
 	private int totalTiles;
@@ -23,13 +28,14 @@ public class GameView extends JFrame {
 	private JButton randomLayoutButton;
 	private JButton resetButton;
 	private JButton playButton;
-
 	private JLabel timerLabel = new JLabel("00:00:00");
 	private final JMenuItem newItem;
 	private final JMenuItem solutionItem;
 	private final JMenuItem exitItem;
 	private final JMenuItem colorItem;
 	private final JMenuItem aboutItem;
+	private final JMenuItem serverItem;
+	private final JMenuItem clientItem;
 	private JProgressBar playerProgressBar;
 	private JProgressBar opponentProgressBar;
 	private boolean designMode = false;
@@ -37,40 +43,7 @@ public class GameView extends JFrame {
 	private AtomicLong startTime;
 	private JComboBox<Integer> boatSizeChoiceBox;
 	private JComboBox<String> boatDirectionChoiceBox;
-	/**
-	 * Displays the splash screen for the game.
-	 */
-	public void showSplashScreen() {
-		// Create a JFrame as splash screen
-		JFrame splashScreen = new JFrame();
-		splashScreen.setUndecorated(true);
 
-		// Load the image
-		JLabel splashLabel = new JLabel();
-		ImageIcon imageIcon = new ImageIcon("src/game_about.jpg");
-		splashLabel.setIcon(imageIcon);
-
-		// Add image to the frame
-		splashScreen.getContentPane().add(splashLabel);
-		splashScreen.pack();
-
-		// Center the screen
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		int locationX = (screenSize.width ) ;
-		int locationY = (screenSize.height) ;
-		splashScreen.setLocation(locationX, locationY);
-
-		// Show the splash screen
-		splashScreen.setVisible(true);
-
-		// Close the splash screen after some time
-		try {
-			Thread.sleep(0);  // Show splash for 5 seconds
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		splashScreen.dispose();
-	}
 	/**
 	 * Constructs a GameView object with the specified GameModel.
 	 *
@@ -94,9 +67,16 @@ public class GameView extends JFrame {
 		colorItem = new JMenuItem("Colors");
 		aboutItem = new JMenuItem("About");
 
+		serverItem = new JMenuItem("Server");
+		clientItem = new JMenuItem("Client");
+
 		fileMenu.add(newItem);
 		fileMenu.add(solutionItem);
 		fileMenu.add(exitItem);
+		fileMenu.add(serverItem);
+		fileMenu.add(clientItem);
+		serverItem.addActionListener(e -> serverGUI());
+		clientItem.addActionListener(e -> clientGUI());
 
 		helpMenu.add(colorItem);
 		helpMenu.add(aboutItem);
@@ -122,29 +102,7 @@ public class GameView extends JFrame {
 
 		setLayout(new GridLayout(1, 1));
 		add(controlPanel);
-		showSplashScreen();
 		setVisible(true);
-	}
-	/**
-	 * Represents a JFrame window for displaying game instructions.
-	 */
-	static class InstructionsWindow extends JFrame {
-		public InstructionsWindow() {
-			setTitle("Instructions");
-			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			setSize(400, 300);
-			setLocationRelativeTo(null);
-
-			ImageIcon icon = new ImageIcon("resources/images/icon_1.png");
-			setIconImage(icon.getImage());
-
-			JLabel instructionsLabel = new JLabel("<html>"
-					+ "<h2>  Battleship:</h2>"
-					+ "<p>   Random or Manual? Press Play to Begin. Choose your style and set sail!</p>"
-					+ "</html>");
-			instructionsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			add(instructionsLabel);
-		}
 	}
 	/**
 	 * Returns the "New" JMenuItem.
@@ -370,7 +328,8 @@ public class GameView extends JFrame {
 				int selectedDimension = selectedItem;
 				dim=selectedItem;
 				System.out.println("Dimension set to: " + selectedDimension);
-				gameModel.setDimension(selectedDimension*2); // update dimension in game model
+				gameModel.setDimension(selectedDimension*2);
+				client.setDimension(selectedDimension);
 				if (gridPanel == null || gridButtons == null) {
 					System.out.println("gridPanel or gridButtons is null");
 					return;
@@ -566,7 +525,6 @@ public class GameView extends JFrame {
 	}
 	/**
 	 * Creates a JButton with a label and disables it.
-	 *
 	 * @param string The label of the button.
 	 * @return The created JButton.
 	 */
@@ -583,6 +541,11 @@ public class GameView extends JFrame {
         ImageIcon icon = new ImageIcon("resources/images/icon_1.png");
         setIconImage(icon.getImage());
     }
+	/**
+	 * Returns the 3D array of JButtons representing the game grids.
+	 *
+	 * @return The 3D array of JButtons.
+	 */
 	public JButton[][][] getGridButtons() {
 		return gridButtons;
 	}
@@ -600,16 +563,16 @@ public class GameView extends JFrame {
 				Color color;
 
 				switch (gridPlayer[row][col]) {
-					case BOAT:
+					case B:
 						color = Color.BLACK;
 						break;
-					case HIT:
+					case H:
 						color = Color.RED;
 						break;
-					case MISS:
+					case M:
 						color = Color.BLUE;
 						break;
-					case EMPTY:
+					case E:
 					default:
 						color = this.getBackground();
 						break;
@@ -674,9 +637,16 @@ public class GameView extends JFrame {
 	 *
 	 * @return The selected boat direction.
 	 */
+	/**
+	 * Returns the selected boat direction from the boat direction choice box in the design panel.
+	 * @return The selected boat direction as a string.
+	 */
 	public String getBoatDirection() {
 		return (String) this.boatDirectionChoiceBox.getSelectedItem();
 	}
+	/**
+	 * Initializes and starts a timer to track game duration.
+	 */
 	private void startTimer() {
 		startTime.set(System.currentTimeMillis()); // Set the start time using AtomicLong's set() method
 		Timer timer = new Timer(1000, new ActionListener() {
@@ -689,6 +659,9 @@ public class GameView extends JFrame {
 		});
 		timer.start(); // Start the timer
 	}
+	/**
+	 * Updates the button names based on the selected language from the ResourceBundle.
+	 */
 	private void updateButtonNames() {
 		// Update the button names based on the loaded properties
 		designButton.setText(messages.getString("designButton"));
@@ -696,28 +669,275 @@ public class GameView extends JFrame {
 		resetButton.setText(messages.getString("resetButton"));
 		playButton.setText(messages.getString("playButton"));
 	}
+	/**
+	 * Updates the player's progress bar based on the current game state.
+	 */
 	public void updatePlayerProgressBar() {
 		int playerProgress = calculateProgressPercentage(gameModel.getPlayerHits());
 		playerProgressBar.setValue(playerProgress);
 		if (playerProgress == 100) {
 			JOptionPane.showMessageDialog(this, "You are the winner!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+			redrawBoard();
 		}
 	}
+	/**
+	 * Updates the computer's progress bar based on the current game state.
+	 */
 	public void updateComputerProgressBar() {
 		int computerProgress = calculateProgressPercentage(gameModel.getComputerHits());
 		opponentProgressBar.setValue(computerProgress);
 		if (computerProgress == 100) {
 			JOptionPane.showMessageDialog(this, "Opponent is the winner!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+			redrawBoard();
 		}
 	}
+	/**
+	 * Updates the total number of tiles based on the game model.
+	 */
 	public void numberOfTiles(){
 		totalTiles=gameModel.getTotalTiles();
 	}
+	/**
+	 * Calculates the progress percentage based on hits and total tiles.
+	 *
+	 * @param hits Number of successful hits.
+	 * @return Percentage of progress.
+	 */
 	private int calculateProgressPercentage(int hits) {
 		return (hits * 100) / totalTiles;
 	}
+	/**
+	 * Updates and returns the total number of boats based on the game model.
+	 * @return Total number of boats.
+	 */
 	private int numberOfBoats(){
 		numBoats= gameModel.getNumBoats();
 		return numBoats;
+	}
+	/**
+	 * Creates and displays the client GUI for the game.
+	 */
+	private void clientGUI() {
+
+		JFrame frame = new JFrame("Client");
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(800, 600);
+
+		frame.setLayout(new BorderLayout());
+
+		ImageIcon imageIcon = new ImageIcon(new ImageIcon("src/client.png").getImage().getScaledInstance(800, 300, Image.SCALE_DEFAULT));
+
+		JLabel imageLabel = new JLabel(imageIcon);
+		frame.add(imageLabel, BorderLayout.NORTH);
+
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new GridBagLayout());
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.weightx = 0.5;
+		c.fill = GridBagConstraints.HORIZONTAL;
+
+		JPanel textFieldAndButtonPanel = new JPanel(new GridLayout(1, 5));
+		// User Text Field
+		JPanel userFieldPanel = new JPanel(new BorderLayout());
+		JTextField userTextField = new JTextField();
+		userTextField.setText(Config.DEFAULT_USER);
+		userTextField.setPreferredSize(new Dimension(0, 20));
+		userFieldPanel.add(new JLabel("User"), BorderLayout.WEST);
+		userFieldPanel.add(userTextField, BorderLayout.CENTER);
+		textFieldAndButtonPanel.add(userFieldPanel);
+
+		// Server Text Field
+		JPanel serverFieldPanel = new JPanel(new BorderLayout());
+		JTextField serverTextField = new JTextField();
+		serverTextField.setText(Config.DEFAULT_ADDR);
+		serverTextField.setPreferredSize(new Dimension(0, 20));
+		serverFieldPanel.add(new JLabel("Server"), BorderLayout.WEST);
+		serverFieldPanel.add(serverTextField, BorderLayout.CENTER);
+		textFieldAndButtonPanel.add(serverFieldPanel);
+
+		// Port Text Field
+		JPanel portFieldPanel = new JPanel(new BorderLayout());
+		JTextField portTextField = new JTextField();
+		portTextField.setText(String.valueOf(Config.DEFAULT_PORT));
+		portTextField.setPreferredSize(new Dimension(0, 20));
+		portFieldPanel.add(new JLabel("Port"), BorderLayout.WEST);
+		portFieldPanel.add(portTextField, BorderLayout.CENTER);
+		textFieldAndButtonPanel.add(portFieldPanel);
+
+
+		JTextArea textArea = new JTextArea();
+		PrintStream clientPrintStream = new PrintStream(new CustomOutputStream(textArea));
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setPreferredSize(new Dimension(300, 200));
+		frame.add(scrollPane, BorderLayout.SOUTH);
+
+		JButton connectButton = new JButton("Connect");
+		connectButton.addActionListener(e -> {
+			new Thread(() -> {
+				String serverAddress = serverTextField.getText();
+				int port = Integer.parseInt(portTextField.getText());
+				client = new Client(serverAddress, port, gameModel, clientPrintStream);
+				client.startConnection();
+			}).start();
+		});
+		textFieldAndButtonPanel.add(connectButton);
+
+		JButton endButton = new JButton("End");
+		endButton.addActionListener(e -> {
+			new Thread(() -> {
+				try {
+					client.stopConnection();
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}).start();
+		});
+		textFieldAndButtonPanel.add(endButton);
+
+		c.gridy = 0;
+		centerPanel.add(textFieldAndButtonPanel, c);
+
+		JPanel buttonPanel2 = new JPanel(new GridLayout(1, 5));
+
+		JButton newGameButton = new JButton("New Game");
+		newGameButton.setPreferredSize(new Dimension(0, 60));
+
+		newGameButton.addActionListener(e -> {
+			System.out.println("New Game button clicked");
+			gameModel.placeRandomBoats();
+			gameController.updatePlayer();
+		});
+
+		buttonPanel2.add(newGameButton);
+
+		JButton sendGameButton = new JButton("Send Game");
+		sendGameButton.addActionListener(e -> {
+			try {
+				client.sendGameConfiguration();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		});
+		buttonPanel2.add(sendGameButton);
+
+		JButton receiveGameButton = new JButton("Receive Game");
+		receiveGameButton.addActionListener(e -> {
+			try {
+				client.requestGameConfiguration();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		});
+		buttonPanel2.add(receiveGameButton);
+
+		JButton sendDataButton = new JButton("Send Data");
+		sendDataButton.addActionListener(e -> {
+			try {
+				String playerName = userTextField.getText();
+
+				client.sendGameResults(playerName, gameModel.getPlayerHits());
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		});
+		buttonPanel2.add(sendDataButton);
+
+		JButton playButton = new JButton("Play");
+		playButton.setPreferredSize(new Dimension(0, 60));
+		playButton.addActionListener(e -> {
+			System.out.println("Client Play button clicked");
+			numberOfTiles();
+			gameMode = true;
+			startTimer();
+		});
+		buttonPanel2.add(playButton);
+
+		c.gridy = 1;
+		centerPanel.add(buttonPanel2, c);
+
+		frame.add(centerPanel, BorderLayout.CENTER);
+
+		frame.setVisible(true);
+	}
+	/**
+	 * Creates and displays the server GUI for the game.
+	 */
+	private void serverGUI() {
+		JFrame frame = new JFrame("Server");
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(800, 600);
+
+		frame.setLayout(new BorderLayout());
+
+		ImageIcon imageIcon = new ImageIcon(new ImageIcon("src/server.png").getImage().getScaledInstance(800, 300, Image.SCALE_DEFAULT));
+		JLabel imageLabel = new JLabel(imageIcon);
+		frame.add(imageLabel, BorderLayout.NORTH);
+
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new GridBagLayout());
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.weightx = 0.5;
+		c.fill = GridBagConstraints.HORIZONTAL;
+
+		JPanel textFieldAndButtonPanel = new JPanel(new GridLayout(1, 5));
+
+		JPanel fieldPanel = new JPanel(new BorderLayout());
+		JTextField textField = new JTextField();
+		textField.setText(String.valueOf(Config.DEFAULT_PORT));
+		textField.setPreferredSize(new Dimension(0, 20));
+
+		fieldPanel.add(new JLabel("Port"), BorderLayout.WEST);
+		fieldPanel.add(textField, BorderLayout.CENTER);
+		textFieldAndButtonPanel.add(fieldPanel);
+
+		JTextArea textArea = new JTextArea();
+		PrintStream serverPrintStream = new PrintStream(new CustomOutputStream(textArea));
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setPreferredSize(new Dimension(300, 200));
+		frame.add(scrollPane, BorderLayout.SOUTH);
+
+		JButton startButton = new JButton("Start");
+		startButton.addActionListener(e -> {
+			int port = Integer.parseInt(textField.getText());
+			server = new Server(port, serverPrintStream);
+			new Thread(() -> {
+				try {
+					server.start();
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}).start();
+		});
+		textFieldAndButtonPanel.add(startButton);
+
+		JButton resultButton = new JButton("Result");
+		resultButton.setPreferredSize(new Dimension(0, 60));
+		textFieldAndButtonPanel.add(resultButton);
+
+		JRadioButton finalizeButton = new JRadioButton("Finalize");
+		finalizeButton.setPreferredSize(new Dimension(0, 60));
+		textFieldAndButtonPanel.add(finalizeButton);
+
+		JButton endButton = new JButton("End");
+		endButton.addActionListener(e -> {
+			try {
+				server.stop();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		});
+		textFieldAndButtonPanel.add(endButton);
+
+		c.gridy = 0;
+		centerPanel.add(textFieldAndButtonPanel, c);
+
+		centerPanel.setPreferredSize(new Dimension(400, 300));
+
+		frame.add(centerPanel, BorderLayout.CENTER);
+
+
+		frame.setVisible(true);
 	}
 }

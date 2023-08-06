@@ -1,9 +1,5 @@
 package MVC;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Random;
 public class GameModel {
     private GameView gameView;
@@ -18,6 +14,7 @@ public class GameModel {
     private CellState[][] gridPlayer;
     private CellState[][] gridOpponent;
     private final Random rand;
+    private String gameString;
     /**
      * Constructs a GameModel object with the default dimension and number of boards.
      */
@@ -37,21 +34,21 @@ public class GameModel {
      */
     public boolean makeMove(int boardIndex, int row, int col) {
         if(boardIndex == 1) {  // if it's the player's move
-            if(gridOpponent[row][col] == CellState.BOAT) {  // if player hits a boat
-                gridOpponent[row][col] = CellState.HIT;
+            if(gridOpponent[row][col] == CellState.B) {  // if player hits a boat
+                gridOpponent[row][col] = CellState.H;
                 playerHits++;
                 return true;
             } else {
-                gridOpponent[row][col] = CellState.MISS;
+                gridOpponent[row][col] = CellState.M;
                 return false;
             }
         } else {  // if it's the computer's move
-            if(gridPlayer[row][col] == CellState.BOAT) {  // if computer hits a boat
-                gridPlayer[row][col] = CellState.HIT;
+            if(gridPlayer[row][col] == CellState.B) {  // if computer hits a boat
+                gridPlayer[row][col] = CellState.H;
                 computerHits++;
                 return true;
             } else {
-                gridPlayer[row][col] = CellState.MISS;
+                gridPlayer[row][col] = CellState.M;
                 return false;
             }
         }
@@ -93,8 +90,8 @@ public class GameModel {
 
         for (int row = 0; row < boardSize; row++) {
             for (int col = 0; col < boardSize; col++) {
-                gridPlayer[row][col] = CellState.EMPTY;
-                gridOpponent[row][col] = CellState.EMPTY;
+                gridPlayer[row][col] = CellState.E;
+                gridOpponent[row][col] = CellState.E;
             }
         }
     }
@@ -120,14 +117,14 @@ public class GameModel {
             }
         }
 
-        // printing the array of I value
+        /* printing the array of I value
         System.out.print("i values: ");
         for (int val : boatSizes) {
             System.out.print(val + " ");
         }
         System.out.println();
-
         System.out.println("Total number of boats: " + numBoats);
+         */
         return numBoats;
 
     }
@@ -169,12 +166,12 @@ public class GameModel {
         if (orientation.equalsIgnoreCase("horizontal")) {
             // Place the boat horizontally
             for (int pos = 0; pos < boatSize; pos++) {
-                grid[randRow][randCol + pos] = CellState.BOAT;
+                grid[randRow][randCol + pos] = CellState.B;
             }
         } else {
             // Place the boat vertically
             for (int pos = 0; pos < boatSize; pos++) {
-                grid[randRow + pos][randCol] = CellState.BOAT;
+                grid[randRow + pos][randCol] = CellState.B;
             }
 
         }
@@ -196,12 +193,12 @@ public class GameModel {
             if (orientation.equalsIgnoreCase("horizontal")) {
                 // Place the boat horizontally
                 for (int pos = 0; pos < boatSize; pos++) {
-                    gridPlayer[row][col + pos] = CellState.BOAT;
+                    gridPlayer[row][col + pos] = CellState.B;
                 }
             } else {
                 // Place the boat vertically
                 for (int pos = 0; pos < boatSize; pos++) {
-                    gridPlayer[row + pos][col] = CellState.BOAT;
+                    gridPlayer[row + pos][col] = CellState.B;
                 }
             }
         }
@@ -225,13 +222,13 @@ public class GameModel {
         for (int pos = 0; pos < boatSize; pos++) {
             if (orientation.equalsIgnoreCase("horizontal")) {
                 // Check horizontally
-                if (col + pos >= dimension || grid[row][col + pos] != CellState.EMPTY) {
+                if (col + pos >= dimension || grid[row][col + pos] != CellState.E) {
                     validPosition = false;
                     break;
                 }
             } else {
                 // Check vertically
-                if (row + pos >= dimension || grid[row + pos][col] != CellState.EMPTY) {
+                if (row + pos >= dimension || grid[row + pos][col] != CellState.E) {
                     validPosition = false;
                     break;
                 }
@@ -256,6 +253,7 @@ public class GameModel {
         generateNumberBoats(gridPlayer);
         generateNumberBoats(gridOpponent);
         printGrids();
+        printGridToString(gridPlayer);
     }
     /**
      * Prints the player's and opponent's grids.
@@ -287,7 +285,7 @@ public class GameModel {
      * Enum representing the possible states of a cell in the game grid.
      */
     public enum CellState {
-        EMPTY, BOAT, HIT, MISS
+        E, B, H, M
     }
     /**
      * Returns the player's grid.
@@ -321,11 +319,34 @@ public class GameModel {
     public int getNumBoats() {
         return numBoats;
     }
+    /**
+     * Returns the total number of tiles occupied by the boats.
+     * @return The total number of tiles occupied by the boats.
+     */
     public int getTotalTiles() {
         return calculateTotalTiles();
     }
-
+    /**
+     * Converts the grid to a string representation.
+     * @param grid The game grid.
+     */
+    private synchronized void printGridToString(CellState[][] grid) {
+        gameString = "";  // Reset gameString to an empty string
+        StringBuilder stringBuilder = new StringBuilder();
+        int boardSize = grid.length;
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                stringBuilder.append(grid[row][col]);
+            }
+        }
+        gameString = stringBuilder.toString();
+    }
+    /**
+     * Returns a string representation of the player's grid.
+     * @return A string representation of the player's grid.
+     */
+    public synchronized String printGridsString() {
+        printGridToString(gridPlayer);
+        return gameString;
+    }
 }
-/**
- * The ColorModel class represents a color selection dialog for the game.
- */
