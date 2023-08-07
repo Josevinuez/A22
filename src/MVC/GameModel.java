@@ -2,13 +2,11 @@ package MVC;
 
 import java.util.Random;
 public class GameModel {
-    private GameView gameView;
     private static final int DEFAULT_DIMENSION = 5;
     private static final int DEFAULT_NUM_OF_BOARDS = 2;
     private int dimension;
     private final int numOfBoards;
     private int numBoats;
-    private int numTiles;
     private int playerHits ;
     private int computerHits = 0;
     private CellState[][] gridPlayer;
@@ -84,12 +82,11 @@ public class GameModel {
      * @param dimension The dimension of the game grid.
      */
     private void initializeGrid(int dimension) {
-        int boardSize = dimension;
-        gridPlayer = new CellState[boardSize][boardSize];
-        gridOpponent = new CellState[boardSize][boardSize];
+        gridPlayer = new CellState[dimension][dimension];
+        gridOpponent = new CellState[dimension][dimension];
 
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
+        for (int row = 0; row < dimension; row++) {
+            for (int col = 0; col < dimension; col++) {
                 gridPlayer[row][col] = CellState.E;
                 gridOpponent[row][col] = CellState.E;
             }
@@ -99,9 +96,8 @@ public class GameModel {
      * Generates random boats on the game grid and returns the number of boats created.
      *
      * @param grid The game grid to generate boats on.
-     * @return The number of boats generated.
      */
-    private int generateNumberBoats(CellState[][] grid) {
+    private void generateNumberBoats(CellState[][] grid) {
         int arraySize = dimension/2;
         int[] boatSizes = new int[arraySize];
         int arrayIndex = 0;
@@ -117,16 +113,6 @@ public class GameModel {
             }
         }
 
-        /* printing the array of I value
-        System.out.print("i values: ");
-        for (int val : boatSizes) {
-            System.out.print(val + " ");
-        }
-        System.out.println();
-        System.out.println("Total number of boats: " + numBoats);
-         */
-        return numBoats;
-
     }
     /**
      * Calculates and returns the total number of tiles occupied by the boats.
@@ -134,7 +120,7 @@ public class GameModel {
      * @return The total number of tiles occupied by the boats.
      */
     public int calculateTotalTiles() {
-        numTiles = 0;
+        int numTiles = 0;
 
         for (int i = dimension / 2; i > 0; i--) {
             for (int j = 1; j <= dimension / 2 - i + 1; j++) {
@@ -274,9 +260,9 @@ public class GameModel {
      */
     private void printGrid(CellState[][] grid) {
         int boardSize = grid.length;
-        for (int row = 0; row < boardSize; row++) {
+        for (CellState[] cellStates : grid) {
             for (int col = 0; col < boardSize; col++) {
-                System.out.print(grid[row][col] + " ");
+                System.out.print(cellStates[col] + " ");
             }
             System.out.println();
         }
@@ -334,9 +320,9 @@ public class GameModel {
         gameString = "";  // Reset gameString to an empty string
         StringBuilder stringBuilder = new StringBuilder();
         int boardSize = grid.length;
-        for (int row = 0; row < boardSize; row++) {
+        for (CellState[] cellStates : grid) {
             for (int col = 0; col < boardSize; col++) {
-                stringBuilder.append(grid[row][col]);
+                stringBuilder.append(cellStates[col]);
             }
         }
         gameString = stringBuilder.toString();

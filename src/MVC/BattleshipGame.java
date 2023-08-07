@@ -13,7 +13,6 @@ public class BattleshipGame {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
 		// Close the splash screen and open the game view
 		splashScreen.closeSplashScreen();
 

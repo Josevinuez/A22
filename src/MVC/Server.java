@@ -4,15 +4,18 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
-    private int port;
+    private final int port;
     private ServerSocket serverSocket;
-    private AtomicInteger clientCount = new AtomicInteger(0);  // For assigning unique IDs to each client
-    private AtomicInteger activeClientCount = new AtomicInteger(0);  // For tracking active clients
-    private PrintStream outStream;
+    private final AtomicInteger clientCount = new AtomicInteger(0);  // For assigning unique IDs to each client
+    private final AtomicInteger activeClientCount = new AtomicInteger(0);  // For tracking active clients
+    private final PrintStream outStream;
+    private volatile boolean isRunning = true;
+
     /**
      * Constructs a new game server with a specified port and output stream.
      * @param port The port on which the server will listen for client connections.
@@ -30,9 +33,10 @@ public class Server {
         outStream.println("Starting the server...");
         serverSocket = new ServerSocket(port);
         try {
-            while (true) {
+            while (isRunning) {
                 outStream.println("Waiting for client to connect...");
                 new ClientHandler(serverSocket.accept(), clientCount.incrementAndGet()).start();
+                clientConnected();
             }
         } catch (SocketException e) {
             outStream.println("Server has been stopped.");
@@ -44,6 +48,7 @@ public class Server {
      */
     public void stop() throws IOException {
         outStream.println("Stopping the server...");
+        isRunning = false;
         serverSocket.close();
     }
     /**
@@ -51,14 +56,14 @@ public class Server {
      */
     public void clientConnected() {
         outStream.println("A client has connected. Total active clients: " + activeClientCount.incrementAndGet());
-        activeClientCount.incrementAndGet();
     }
     /**
      * Notifies that a client has disconnected from the server and decrements the active client count.
      */
     public void clientDisconnected() {
-        outStream.println("A client has disconnected. Total active clients: " + activeClientCount.decrementAndGet());
-        if (activeClientCount.decrementAndGet() == 0) {
+        int currentCount = activeClientCount.decrementAndGet();
+        outStream.println("A client has disconnected. Total active clients: " + currentCount);
+        if (currentCount == 0) {
             try {
                 stop();
             } catch (IOException e) {
@@ -66,15 +71,17 @@ public class Server {
             }
         }
     }
+
     /**
      * Represents a handler for individual client connections.
      */
     public class ClientHandler extends Thread {
-        private Socket clientSocket;
+        private final Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
-        private int clientId;
-        private ConcurrentLinkedQueue<String> gameConfigurations = new ConcurrentLinkedQueue<>();
+        private final int clientId;
+        private final BlockingQueue<String> gameConfigurations = new LinkedBlockingQueue<>();
+
         /**
          * Constructs a new client handler for a given socket and client ID.
          *
@@ -108,9 +115,27 @@ public class Server {
                     String protocol = parts[1];
                     switch (protocol) {
                         case Config.PROTOCOL_END:
-                            // Handle the end of the connection
                             outStream.println("Client " + clientId + " has ended the connection.");
-                            return;  // End this thread
+                            // Respond back to the client before closing resources
+                            out.println("ACK_END");
+
+                            // Close client's resources
+                            try {
+                                if (out != null) {
+                                    out.close();
+                                }
+                                if (in != null) {
+                                    in.close();
+                                }
+                                clientSocket.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            clientDisconnected();
+
+                            // Exit from the run method to end this thread
+                            return;
                         case Config.PROTOCOL_SENDGAME:
                             try {
                                 // Split the received data into dimension and game configuration
@@ -127,12 +152,11 @@ public class Server {
                             }
                             break;
                         case Config.PROTOCOL_RECVGAME:
-                            // If there are no game configurations in the queue, make the client wait
-                            while (gameConfigurations.isEmpty()) {
-                                Thread.sleep(100);  // Wait for a short period of time before checking again
-                            }
-                            // Send the game configuration at the front of the queue to the client
-                            out.println(gameConfigurations.poll());
+                            // This will block until there's a game configuration available
+                            String gameConfig = gameConfigurations.take();
+
+                            // Send the game configuration to the client
+                            out.println(gameConfig);
                             break;
                         case Config.PROTOCOL_DATA:
                             try {
@@ -152,10 +176,7 @@ public class Server {
                 }
                 outStream.println("ClientHandler for client " + clientId + " has ended.");
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {

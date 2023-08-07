@@ -17,7 +17,6 @@ public class GameView extends JFrame {
 	private JDialog designDialog;
 	private int dim=5;
 	private int totalTiles;
-	private int numBoats;
 	private ResourceBundle messages;
 	private JPanel[] gridPanel;
 	private JButton[][][] gridButtons;
@@ -33,13 +32,9 @@ public class GameView extends JFrame {
 	private final JMenuItem solutionItem;
 	private final JMenuItem exitItem;
 	private final JMenuItem colorItem;
-	private final JMenuItem aboutItem;
-	private final JMenuItem serverItem;
-	private final JMenuItem clientItem;
 	private JProgressBar playerProgressBar;
 	private JProgressBar opponentProgressBar;
 	private boolean designMode = false;
-	private boolean gameMode = false;
 	private AtomicLong startTime;
 	private JComboBox<Integer> boatSizeChoiceBox;
 	private JComboBox<String> boatDirectionChoiceBox;
@@ -65,10 +60,10 @@ public class GameView extends JFrame {
 		exitItem = new JMenuItem("Exit");
 
 		colorItem = new JMenuItem("Colors");
-		aboutItem = new JMenuItem("About");
+		JMenuItem aboutItem = new JMenuItem("About");
 
-		serverItem = new JMenuItem("Server");
-		clientItem = new JMenuItem("Client");
+		JMenuItem serverItem = new JMenuItem("Server");
+		JMenuItem clientItem = new JMenuItem("Client");
 
 		fileMenu.add(newItem);
 		fileMenu.add(solutionItem);
@@ -135,14 +130,6 @@ public class GameView extends JFrame {
 	 */
 	public JMenuItem getColorItem() {
 		return colorItem;
-	}
-	/**
-	 * Returns the "About" JMenuItem.
-	 *
-	 * @return The "About" JMenuItem.
-	 */
-	public JMenuItem getAboutItem() {
-		return aboutItem;
 	}
 	/**
 	 * Creates the grid panels for the player and opponent grids.
@@ -397,7 +384,6 @@ public class GameView extends JFrame {
 		playButton.addActionListener(e -> {
 			System.out.println("Play button clicked");
 			numberOfTiles();
-			gameMode = true;
 			startTimer();
 		});
 
@@ -617,14 +603,6 @@ public class GameView extends JFrame {
 		return this.designMode;
 	}
 	/**
-	 * Gets the current game mode state.
-	 *
-	 * @return True if the game is in progress, false otherwise.
-	 */
-	public boolean getGameMode() {
-		return this.gameMode;
-	}
-	/**
 	 * Gets the selected boat size from the boat size choice box in the design panel.
 	 *
 	 * @return The selected boat size.
@@ -632,11 +610,7 @@ public class GameView extends JFrame {
 	public int getBoatSize() {
 		return (Integer) this.boatSizeChoiceBox.getSelectedItem();
 	}
-	/**
-	 * Gets the selected boat direction from the boatdirection choice box in the design panel.
-	 *
-	 * @return The selected boat direction.
-	 */
+
 	/**
 	 * Returns the selected boat direction from the boat direction choice box in the design panel.
 	 * @return The selected boat direction as a string.
@@ -708,11 +682,9 @@ public class GameView extends JFrame {
 	}
 	/**
 	 * Updates and returns the total number of boats based on the game model.
-	 * @return Total number of boats.
 	 */
-	private int numberOfBoats(){
-		numBoats= gameModel.getNumBoats();
-		return numBoats;
+	private void numberOfBoats(){
+		int numBoats = gameModel.getNumBoats();
 	}
 	/**
 	 * Creates and displays the client GUI for the game.
@@ -773,26 +745,22 @@ public class GameView extends JFrame {
 		frame.add(scrollPane, BorderLayout.SOUTH);
 
 		JButton connectButton = new JButton("Connect");
-		connectButton.addActionListener(e -> {
-			new Thread(() -> {
-				String serverAddress = serverTextField.getText();
-				int port = Integer.parseInt(portTextField.getText());
-				client = new Client(serverAddress, port, gameModel, clientPrintStream);
-				client.startConnection();
-			}).start();
-		});
+		connectButton.addActionListener(e -> new Thread(() -> {
+			String serverAddress = serverTextField.getText();
+			int port = Integer.parseInt(portTextField.getText());
+			client = new Client(serverAddress, port, gameModel, clientPrintStream);
+			client.startConnection();
+		}).start());
 		textFieldAndButtonPanel.add(connectButton);
 
 		JButton endButton = new JButton("End");
-		endButton.addActionListener(e -> {
-			new Thread(() -> {
-				try {
-					client.stopConnection();
-				} catch (IOException ex) {
-					ex.printStackTrace();
-				}
-			}).start();
-		});
+		endButton.addActionListener(e -> new Thread(() -> {
+			try {
+				client.stopConnection();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}).start());
 		textFieldAndButtonPanel.add(endButton);
 
 		c.gridy = 0;
@@ -848,7 +816,6 @@ public class GameView extends JFrame {
 		playButton.addActionListener(e -> {
 			System.out.println("Client Play button clicked");
 			numberOfTiles();
-			gameMode = true;
 			startTimer();
 		});
 		buttonPanel2.add(playButton);

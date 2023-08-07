@@ -11,7 +11,7 @@ import javax.swing.JTextArea;
  */
 public class CustomOutputStream extends OutputStream {
     /** The JTextArea to which the output stream will be redirected. */
-    private JTextArea textArea;
+    private final JTextArea textArea;
 
     /**
      * Constructs a new CustomOutputStream that will redirect its output to the given JTextArea.

@@ -4,15 +4,15 @@ import java.io.*;
 import java.net.Socket;
 
 public class Client {
-    private String host;
-    private int port;
+    private final String host;
+    private final int port;
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
     private int dimension= 5;
-    private int clientId;  // The client's unique ID, assigned by the server
-    private GameModel gameModel;
-    private PrintStream outStream;
+    private int clientId;
+    private final GameModel gameModel;
+    private final PrintStream outStream;
 
     /**
      * Constructs a new game client with specified host, port, game model, and output stream.
@@ -58,6 +58,9 @@ public class Client {
      * @throws IOException if there's an error in network communication.
      */
     public String sendMessage(String msg) throws IOException {
+        if(clientSocket.isClosed()) {
+            throw new IOException("Socket is already closed.");
+        }
         outStream.println("Sending message to server: " + msg);
         out.println(msg);
         String response = in.readLine();
@@ -70,11 +73,22 @@ public class Client {
      */
     public void stopConnection() throws IOException {
         outStream.println("Stopping connection to the server...");
-        // Send a message to the server to indicate that this client is disconnecting
-        sendMessage(clientId + Config.PROTOCOL_SEPARATOR + Config.PROTOCOL_END);
-        in.close();
-        out.close();
-        clientSocket.close();
+
+        // Check if the socket is still open
+        if (!clientSocket.isClosed()) {
+            // Send a message to the server to indicate that this client is disconnecting
+            sendMessage(clientId + Config.PROTOCOL_SEPARATOR + Config.PROTOCOL_END);
+
+            // Close client's resources
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            clientSocket.close();
+        }
+
         outStream.println("Disconnected from server.");
     }
     /**
@@ -87,7 +101,6 @@ public class Client {
         // Convert the game configuration to a string
         String gameConfiguration = gameModel.printGridsString();
         outStream.println("Sending game configuration to server...");
-        // Include the dimension in the message
         sendMessage(clientId + Config.PROTOCOL_SEPARATOR + Config.PROTOCOL_SENDGAME + Config.PROTOCOL_SEPARATOR + dimension + Config.FIELD_SEPARATOR + gameConfiguration);
         outStream.println("Sent game configuration to server: " + gameConfiguration);
     }
